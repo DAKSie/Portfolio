@@ -210,12 +210,33 @@ footer {
 .btn{
     padding:0.45rem 0.7rem;
     border:1px solid #bbb;
-    border-radius:6px;
+    border-radius:8px;
     background:#fff;
     cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.4rem;
+    font-weight:600;
+    text-decoration:none; /* remove underline for anchor buttons */
+    color:inherit; /* keep color consistent */
+    transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+    box-shadow: 0 6px 14px rgba(20,24,28,0.06);
+    line-height:1;
 }
 
-.btn.primary{background:#0066cc;color:#fff;border-color:#0066cc}
+.btn:focus{
+    outline:3px solid rgba(31,111,255,0.18);
+    outline-offset:3px;
+}
+
+.btn.primary{background:linear-gradient(180deg,#1f6fff 0%, #165cff 100%);color:#fff;border-color:#165cff}
+.btn.primary:hover{ transform: translateY(-2px); box-shadow: 0 12px 30px rgba(23,76,170,0.16); }
+.btn:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(20,24,28,0.09); }
+.btn:active{ transform: translateY(0); box-shadow: 0 6px 14px rgba(20,24,28,0.06); }
+
+/* Ensure anchor elements styled as .btn don't show default link underlines */
+.btn, .btn:link, .btn:visited { text-decoration: none; }
 
 .status{color:#2b6a0b;font-size:0.95rem}
 
@@ -363,8 +384,14 @@ footer {
 }
 .project-title{font-weight:600;color:#0b2a66;font-size:0.98rem}
 .project-desc{font-size:0.92rem;color:#333}
-.project-actions{margin-top:6px;width:100%;display:flex;justify-content:flex-end}
-.project-actions .btn{padding:0.4rem 0.7rem;font-size:0.92rem}
+.project-actions{margin-top:6px;width:100%;display:flex;justify-content:flex-end;gap:8px}
+.project-actions .btn{padding:0.5rem 0.85rem;font-size:0.95rem;min-width:92px}
+
+/* Responsive: center buttons on small screens and allow full-width tap targets */
+@media (max-width:480px){
+    .project-actions{justify-content:center}
+    .project-actions .btn{width:100%;max-width:380px}
+}
 
 @media (max-width:480px){
     .project-grid{grid-template-columns:1fr}

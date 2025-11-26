@@ -128,10 +128,10 @@ if(isConfigFilled){
 
     // Auto-generated certificate thumbnails list (detected in workspace)
     const certificates = [
-        'global/certifications/thumbnail/logic.png',
-        'global/certifications/thumbnail/java-its.png',
-        'global/certifications/thumbnail/intro-to-cs.png',
-        'global/certifications/thumbnail/cpp-workshop.png'
+        'global/certifications/thumbnail/Think Again IV - How to Avoid Fallacies Certificate.png',
+        'global/certifications/thumbnail/Java Information Technology Specialist Certificate.png',
+        'global/certifications/thumbnail/Introduction to Programming With CSharp.png',
+        'global/certifications/thumbnail/C++ Lab - Crafting Code in the Digital Age.png'
     ];
 
     function buildCertCarousel(items){
@@ -353,7 +353,8 @@ if(isConfigFilled){
         // Theme cycling: light <-> dark (persists in localStorage)
         const themeBtn = document.querySelector('header button');
         const themes = ['light','dark'];
-        let currentTheme = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        // Default to dark theme when no explicit user setting exists
+        let currentTheme = localStorage.getItem('theme') || 'dark';
         function applyTheme(t){
             // Directly apply the theme class; CSS transitions handle the smooth change.
             currentTheme = t;
