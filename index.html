@@ -4,24 +4,19 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Portfolio</title>
-	<link rel="icon" type="image/png" href="../global/favicon.png">
-	<style>
-		:root{font-family:Segoe UI, Roboto, Arial, sans-serif;color:#222}
-		body{display:flex;flex-direction:column;min-height:100vh;margin:0}
-		header{display:flex;align-items:center;justify-content:center;padding:28px 0}
-		.portrait{width:160px;height:160px;object-fit:cover;border-radius:50%;box-shadow:0 6px 18px rgba(0,0,0,.12)}
-		main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
-		.content{max-width:760px;width:100%}
-		ul{list-style:disc;margin-left:1.25rem}
-		li{margin:1rem 0}
-		li h3{margin:.1rem 0 .4rem 0;font-size:1.1rem}
-		footer{background:#f7f7f7;padding:14px 20px;text-align:center;font-size:.95rem}
-		.placeholder{color:#555}
-	</style>
+	<link rel="icon" type="image/png" href="global/favicon.png">
+	<link rel="stylesheet" href="style.css">
+	<!-- Bootstrap 5 CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gtvk2k6m+Y9t7w1Qjv5sY6Y7xv1q1eZgZf4F1m5mN6rF2X1yY5lZ3V1jK6m9t6M/" crossorigin="anonymous">
 </head>
 <body>
 	<header>
-		<img class="portrait" src="../global/picture.jpg" alt="Portrait">
+		<h1>Rico Euma O. Aban</h1>
+		<img class="portrait" src="global/picture.jpg" alt="Portrait">
+		<div>
+			<p>BS Computer Science | 2nd Year</p>
+			<button type="button" class="btn primary">Change Theme</button>
+		</div>
 	</header>
 
 	<main>
@@ -34,7 +29,10 @@
 
 				<li>
 					<h3>Certifications</h3>
-					<p class="placeholder">Placeholder: list certifications (e.g., course names, issuing organizations).</p>
+					<div id="certifications" class="certifications">
+						<p class="placeholder">Below are certification thumbnails. Click to view.</p>
+						<ul id="cert-grid" class="cert-grid" aria-live="polite"></ul>
+					</div>
 				</li>
 
 				<li>
@@ -42,11 +40,36 @@
 					<p class="placeholder">Placeholder: short descriptions and links to previous projects or repos.</p>
 				</li>
 			</ul>
+		
+			<section class="feedback">
+				<h3>Feedback</h3>
+				<div class="feedback-controls">
+					<label for="feedback-name" class="visually-hidden">Name</label>
+					<input id="feedback-name" class="name-input" placeholder="Your name (leave empty to auto-generate)">
+				</div>
+				<textarea id="feedback-text" class="feedback-input" placeholder="Leave your feedback here..." rows="6"></textarea>
+				<div class="feedback-actions">
+					<button id="submit-feedback" type="button" class="btn primary">Submit Feedback</button>
+					<span id="feedback-status" class="status" aria-live="polite"></span>
+				</div>
+			</section>
+
 		</div>
 	</main>
 
+	<section class="existing-feedbacks">
+		<h3>Existing Feedbacks</h3>
+		<div class="placeholder">Existing feedbacks will appear here once the backend is ready.</div>
+	</section>
+
+	<!-- Bootstrap bundle (includes Popper) -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-0B6qf6q8Y3q9K6lY9q4m1i8n5c7v2z8b3y9p1f2r6s7t8u9v0w1x2y3z4a5b6c7d" crossorigin="anonymous"></script>
+	<!-- Runtime env (ignored): provides window.__ENV__ from your local .env -->
+	<script src="env.local.js"></script>
+	<script type="module" src="script.js"></script>
+
 	<footer>
-		<div>Contact: <span class="placeholder">your.name@example.com — +1 (555) 555-5555</span></div>
+		<div>Contact: <span class="placeholder">redygrassy09@gmail.com — +63 905 4808 609</span></div>
 	</footer>
 </body>
 </html>
