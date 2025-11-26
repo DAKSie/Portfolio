@@ -182,61 +182,16 @@ if(isConfigFilled){
         // Build certifications grid
         try{ buildCertCarousel(certificates); }catch(e){ console.warn('Failed to build cert carousel', e); }
 
-        // NOTE: Moderation is performed client-side here using the Google
-        // Generative Language (text-bison) model via a simple prompt-based
-        // classifier. Placing API keys client-side is insecure; rotate the
-        // key and prefer a server-side proxy in production. See README.
+        
         const GOOGLE_API_KEY = 'AIzaSyAgEJef33FmWLWMMDQ9AOXlJx2C9n4O7rg';
+        //danilo kabalo mangita ka sa api key nako HAHAHAHAHAHA
+        //ayaw sa, please. I need my tokens.
+        //Pwede man ask nicely saakoa chat ra AHHAHAHAHA
 
-        /**
-         * Ask Google GenAI (text-bison) to classify/moderate the text.
-         * The prompt asks for JSON only with fields: blocked (bool), severity (low|medium|high),
-         * categories (array of strings), masked (string) where offensive words are replaced.
-         */
         async function moderateText(text){
             if(!text) return { blocked: false, severity: 'low', categories: [], masked: text, is_feedback: false, reason: 'empty' };
 
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generate?key=${GOOGLE_API_KEY}`;
-            const prompt = `You are a content-safety assistant. Analyze the following user feedback and respond with JSON ONLY (no extra text, no explanation). The JSON must have keys: "blocked" (true if content must be blocked entirely), "severity" (one of \"low\", \"medium\", \"high\"), "categories" (array of strings like \"profanity\", \"hate\", \"sexual\", \"threat\"), "masked" (the original text but with offensive words replaced by asterisks preserving length), and "is_feedback" (boolean indicating whether this is meaningful feedback). If you include "reason", that can be a short string explaining why something is not feedback. Allow professional criticism and negative opinions. Block or mark high severity for violent threats, calls for harm, slurs targeting protected groups, or explicit sexual content. For mere profanity or mild insults, mark severity low/medium and provide a masked version.
-
-Text (between <<<START>>> and <<<END>>>):
-<<<START>>>
-${text}
-<<<END>>>
-
-Return compact JSON only.`;
-
-            try{
-                const resp = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: { text: prompt },
-                        temperature: 0,
-                        maxOutputTokens: 300
-                    })
-                });
-                if(resp.ok){
-                    const data = await resp.json();
-                    const candidate = data?.candidates?.[0]?.output || data?.candidates?.[0]?.content || '';
-                    const textOut = candidate || JSON.stringify(data);
-                    const jsonMatch = textOut.match(/\{[\s\S]*\}/);
-                    if(jsonMatch){
-                        try{
-                            const parsed = JSON.parse(jsonMatch[0]);
-                            return parsed;
-                        }catch(e){
-                            // fallthrough to heuristic fallback
-                        }
-                    }
-                }else{
-                    console.warn('GenAI API error: ' + resp.status + ' ' + resp.statusText);
-                }
-            }catch(err){
-                console.warn('Moderation call failed:', err);
-            }
-
-            // Heuristic fallback if API call failed or response couldn't be parsed
+            // Fast heuristic pass (run locally for low latency)
             const profanity = ['fuck','shit','bitch','asshole','bastard','cunt','motherfucker','nigger','faggot'];
             let masked = text;
             let found = [];
@@ -247,10 +202,32 @@ Return compact JSON only.`;
                     masked = masked.replace(re, (m)=> '*'.repeat(m.length));
                 }
             });
-            const severity = found.length ? 'medium' : 'low';
             const categories = found.length ? ['profanity'] : [];
             const highSlurs = ['nigger','faggot','cunt','motherfucker'];
             const hasHigh = highSlurs.some(s => new RegExp(s,'i').test(text));
+
+            // Quick threat detection
+            const threatPatterns = [ /\bi will kill you\b/i, /\bkill you\b/i, /\bi'll kill you\b/i, /\bi will (hurt|harm) you\b/i, /\bi'll (hurt|harm) you\b/i, /\bi am going to kill\b/i, /\bshoot you\b/i, /\bstab you\b/i, /\bbeat you\b/i, /\brape you\b/i, /\bkill yourself\b/i ];
+            const isThreat = threatPatterns.some(rx => rx.test(text));
+            if(isThreat){
+                return { blocked: true, severity: 'high', categories: Array.from(new Set([...categories, 'threat'])), masked: masked, is_feedback: false, reason: 'threat' };
+            }
+
+            // Personal attack detection
+            const insultWords = ['stupid','idiot','suck','sucks','trash','worthless','loser','pathetic','dumb','moron','garbage'];
+            const addressedToYou = /\b(you|u|your|you're|youre)\b/i.test(text);
+            const hasInsult = insultWords.some(w => new RegExp('\\b' + w + '\\b','i').test(text)) || found.length>0;
+            const isPersonalAttack = addressedToYou && hasInsult;
+            if(isPersonalAttack){
+                return { blocked: true, severity: 'medium', categories: Array.from(new Set([...categories, 'personal_attack'])), masked: masked, is_feedback: false, reason: 'personal_attack', personal_attack: true };
+            }
+
+            // Contact/solicitation detection
+            const contactPatterns = [ /\bmailto:\b/i, /@\w+\.\w+/i, /\b\d{3}[-\.\s]?\d{3}[-\.\s]?\d{4}\b/, /\b(api[-_ ]?key|token|secret)\b/i, /\bcontact me\b/i, /\bcall me\b/i, /\badd me\b/i, /\bfollow me\b/i, /\binstagram\b|\btwitter\b|\bfacebook\b|\btelegram\b/i ];
+            const isContact = contactPatterns.some(rx => rx.test(text));
+            if(isContact){
+                return { blocked: false, severity: 'low', categories: Array.from(new Set([...categories, 'irrelevant'])), masked, is_feedback: false, reason: 'contact_or_solicitation' };
+            }
 
             // Heuristic gibberish / meaningless detection
             const stripped = text.replace(/\s+/g,' ').trim();
@@ -258,13 +235,72 @@ Return compact JSON only.`;
             const wordCount = words.length;
             const nonLetterMatches = (text.match(/[^A-Za-z0-9\s]/g) || []).length;
             const nonLetterRatio = text.length ? nonLetterMatches / text.length : 0;
-            const longRepeated = /(\w)\1{5,}/i.test(text); // same char repeated 6+ times
+            const longRepeated = /(\w)\1{5,}/i.test(text);
             const lotsOfShortTokens = words.filter(w=>w.length<=2).length / (wordCount||1) > 0.6;
             const isLikelyGibberish = wordCount < 3 || nonLetterRatio > 0.4 || longRepeated || lotsOfShortTokens;
-            const isFeedback = !isLikelyGibberish;
-            const reason = isFeedback ? 'appears_meaningful' : 'too_short_or_gibberish';
+            if(isLikelyGibberish){
+                return { blocked: false, severity: 'low', categories: Array.from(new Set([...categories, 'irrelevant'])), masked, is_feedback: false, reason: 'too_short_or_gibberish' };
+            }
 
-            return { blocked: hasHigh, severity: hasHigh ? 'high' : severity, categories, masked, is_feedback: isFeedback, reason };
+            // Relevance detection
+            const feedbackKeywords = ['site','website','page','portfolio','project','resume','mobile','desktop','design','load','loading','slow','bug','error','issue','feature','layout','link','image','certificate','pdf','feedback','suggest','improve','improvement','responsive','button','form','typo','content','performance','accessibility','readability','navigation','nav','submit','contact','email'];
+            const lower = text.toLowerCase();
+            const hasFeedbackKeyword = feedbackKeywords.some(k => lower.includes(k));
+            const opinionWords = ['love','like','dislike','hate','great','good','bad','terrible','awesome','awful'];
+            const hasOpinion = opinionWords.some(k => lower.includes(k));
+            if(!hasFeedbackKeyword && (wordCount < 6 && !hasOpinion)){
+                return { blocked: false, severity: 'low', categories: Array.from(new Set([...categories, 'irrelevant'])), masked, is_feedback: false, reason: 'irrelevant_or_personal_statement' };
+            }
+
+            // At this point heuristics consider it likely meaningful feedback.
+            let baseResult = { blocked: false, severity: hasHigh ? 'high' : (found.length ? 'medium' : 'low'), categories, masked, is_feedback: true, reason: 'appears_meaningful' };
+
+            // If there's no API key or the text is short, return right away to keep latency low
+            const useRemote = (typeof GOOGLE_API_KEY === 'string' && GOOGLE_API_KEY && GOOGLE_API_KEY.indexOf('AIza') === 0);
+            if(!useRemote || text.length < 120){
+                return baseResult;
+            }
+
+            // For longer / potentially ambiguous messages, attempt a remote moderation call with a short timeout
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generate?key=${GOOGLE_API_KEY}`;
+            const prompt = `You are a content-safety assistant. Analyze the following user feedback and respond with JSON ONLY (no extra text, no explanation). The JSON must have keys: "blocked" (true if content must be blocked entirely), "severity" (one of \"low\", \"medium\", \"high\"), "categories" (array of strings like \"profanity\", \"hate\", \"sexual\", \"threat\", \"irrelevant\", \"personal_attack\"), "masked" (the original text but with offensive words replaced by asterisks preserving length), "is_feedback" (boolean indicating whether this is meaningful feedback), and optionally "reason" (short string explaining why something is not feedback).`; 
+
+            try{
+                const controller = new AbortController();
+                const timeoutId = setTimeout(()=> controller.abort(), 1500); // 1.5s timeout
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal,
+                    body: JSON.stringify({ prompt: { text: prompt + '\nText:\n' + text }, temperature: 0, maxOutputTokens: 300 })
+                });
+                clearTimeout(timeoutId);
+                if(resp.ok){
+                    const data = await resp.json();
+                    const candidate = data?.candidates?.[0]?.output || data?.candidates?.[0]?.content || '';
+                    const textOut = candidate || JSON.stringify(data);
+                    const jsonMatch = textOut.match(/\{[\s\S]*\}/);
+                    if(jsonMatch){
+                        try{
+                            const parsed = JSON.parse(jsonMatch[0]);
+                            // merge parsed fields with our heuristics (favor parsed when present)
+                            return Object.assign({}, baseResult, parsed);
+                        }catch(e){
+                            // fall back to baseResult
+                        }
+                    }
+                }else{
+                    console.warn('GenAI API error: ' + resp.status + ' ' + resp.statusText);
+                }
+            }catch(err){
+                if(err.name === 'AbortError'){
+                    console.warn('Moderation API timed out, using local heuristics');
+                }else{
+                    console.warn('Moderation call failed:', err);
+                }
+            }
+
+            return baseResult;
         }
 
         if(submitBtn){
@@ -280,14 +316,26 @@ Return compact JSON only.`;
                 const mod = await moderateText(text);
                 // If the moderator determines the input is not meaningful feedback, reject it
                 if(mod && mod.is_feedback === false){
-                    statusEl.textContent = 'Please enter a clear, constructive feedback message.' + (mod.reason ? (' Reason: ' + mod.reason) : '');
+                    if(mod.reason === 'contact_or_solicitation' || (mod.categories && mod.categories.includes('irrelevant'))){
+                        statusEl.textContent = 'Feedback rejected.';
+                    }else{
+                        statusEl.textContent = 'Please enter a clear, constructive feedback message.' + (mod.reason ? (' Reason: ' + mod.reason) : '');
+                    }
                     return;
                 }
-                // If model says blocked and severity high => block entirely
-                if(mod && mod.blocked && (mod.severity === 'high' || (mod.categories && (mod.categories.includes('hate') || mod.categories.includes('threat') || mod.categories.includes('sexual'))))){
+
+                // Block explicit threats or content flagged as blocked by the moderator
+                if(mod && (mod.blocked || (mod.categories && (mod.categories.includes('threat') || mod.categories.includes('sexual'))))){
                     statusEl.textContent = 'Your feedback contains disallowed content and was not submitted.';
                     return;
                 }
+
+                // Block targeted personal attacks
+                if(mod && mod.personal_attack){
+                    statusEl.textContent = 'Personal attacks are not accepted. Please provide constructive, impartial feedback.';
+                    return;
+                }
+
                 // If moderation suggests masking, use masked version
                 const finalText = (mod && mod.masked) ? mod.masked : text;
                 // notify user if we masked content
@@ -301,6 +349,32 @@ Return compact JSON only.`;
                 nameInput.value = name;
             });
         }
+
+        // Theme cycling: light <-> dark (persists in localStorage)
+        const themeBtn = document.querySelector('header button');
+        const themes = ['light','dark'];
+        let currentTheme = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        function applyTheme(t){
+            // Directly apply the theme class; CSS transitions handle the smooth change.
+            currentTheme = t;
+            if(t === 'dark'){
+                document.body.classList.add('dark');
+            } else {
+                document.body.classList.remove('dark');
+            }
+            try{ localStorage.setItem('theme', t); }catch(e){}
+            if(themeBtn){
+                themeBtn.textContent = t === 'dark' ? 'Switch to Light' : 'Switch to Dark';
+            }
+        }
+        if(themeBtn){
+            themeBtn.addEventListener('click', ()=>{
+                const next = currentTheme === 'light' ? 'dark' : 'light';
+                applyTheme(next);
+            });
+        }
+        // apply initially
+        applyTheme(currentTheme);
 
         // initial load
         setTimeout(()=> fetchFeedbacks(), 250);

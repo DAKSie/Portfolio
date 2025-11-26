@@ -3,6 +3,74 @@
     color: #222;
 }
 
+/* Dark theme overrides (applied when `body.dark` is present) */
+body.dark {
+    background: #0b0b0d;
+    color: #e6e6e6;
+}
+body.dark header,
+body.dark main,
+body.dark footer {
+    color: inherit;
+}
+body.dark footer {
+    background: #060608;
+    color: #bfbfbf;
+}
+body.dark .placeholder { color: #9ea3a8; }
+body.dark .btn { background: #16171a; color: #e6e6e6; border-color: #2a2a2a; }
+body.dark .btn.primary { background: #1f6fff; border-color: #1f6fff; color: #fff; }
+body.dark .feedback-input,
+body.dark .name-input { background: #0f1113; color: #e6e6e6; border-color: #2b2b2b; }
+body.dark .feedback-list li.feedback-card,
+body.dark .cert-card,
+body.dark .project-card {
+    background: linear-gradient(180deg,#0f1113 0%, #0b0d0f 100%);
+    border: 1px solid #1f1f22;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+}
+
+/* Ensure text inside cards and related components is visible in dark mode */
+body.dark .feedback-card strong,
+body.dark .project-title {
+    color: #cfe6ff;
+}
+body.dark .feedback-card p,
+body.dark .project-desc,
+body.dark .cert-title,
+body.dark .placeholder,
+body.dark .feedback-meta {
+    color: #cfcfcf;
+}
+body.dark .status { color: #9ad17a; }
+body.dark .feedback-input::placeholder,
+body.dark .name-input::placeholder {
+    color: #8f979b;
+}
+
+/* Smooth transitions for theme changes */
+/* keep a gentle cross-fade of background and text color */
+body {
+    transition: background-color 420ms ease, color 420ms ease;
+}
+
+/* Smooth transitions for cards, inputs and buttons when theme changes */
+.feedback-list li.feedback-card,
+.cert-card,
+.project-card {
+    transition: background-color 420ms ease, color 420ms ease, border-color 420ms ease, box-shadow 420ms ease;
+}
+
+.feedback-input,
+.name-input,
+.btn,
+.btn.primary {
+    transition: background-color 320ms ease, color 320ms ease, border-color 320ms ease;
+}
+
+
+
+
 body {
     display: flex;
     flex-direction: column;
@@ -29,6 +97,35 @@ header > div {
     object-fit: cover;
     border-radius: 50%;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    /* Smooth, hardware-accelerated transform for hover */
+    transition: transform 260ms cubic-bezier(.2,.9,.2,1), box-shadow 260ms ease;
+    will-change: transform, box-shadow;
+}
+
+/* Hover and focus interaction for portrait (wrapped in an anchor) */
+header a:hover .portrait,
+header a:focus-visible .portrait {
+    transform: translateY(-6px) scale(1.03) rotate(-1deg);
+    box-shadow: 0 16px 38px rgba(13, 35, 80, 0.18);
+}
+
+/* Keyboard accessibility: visible focus outline on anchor containing the portrait */
+header a:focus-visible {
+    outline: 3px solid #1f6fff;
+    outline-offset: 6px;
+    border-radius: 50%;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .portrait,
+    header a:hover .portrait,
+    header a:focus-visible .portrait {
+        transition: none;
+        transform: none;
+        will-change: auto;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    }
 }
 
 main {
@@ -272,3 +369,114 @@ footer {
 @media (max-width:480px){
     .project-grid{grid-template-columns:1fr}
 }
+
+/* Timeline styles for Achievements */
+.timeline{
+    position:relative;
+    padding:18px 0 18px 28px;
+    margin:8px 0 0 0;
+}
+.timeline::before{
+    content:"";
+    position:absolute;
+    left:28px;
+    top:0;
+    bottom:0;
+    width:3px;
+    background:#e6e6e6;
+    border-radius:2px;
+}
+.timeline-item{
+    position:relative;
+    margin:12px 0 12px 48px;
+    padding:12px 14px;
+    background:linear-gradient(180deg,#ffffff 0%, #fbfbfb 100%);
+    border:1px solid #e8e8e8;
+    border-radius:10px;
+    box-shadow:0 8px 20px rgba(20,24,28,0.06);
+}
+.timeline-item::before{
+    content:"";
+    position:absolute;
+    left:-38px;
+    top:18px;
+    width:14px;
+    height:14px;
+    background:#0066cc;
+    border-radius:50%;
+    border:3px solid #fff;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+.timeline-time{
+    display:block;
+    font-size:0.82rem;
+    color:#6b6f75;
+    margin-bottom:6px;
+}
+.timeline-title{margin:0 0 6px 0;font-size:1rem;color:#0b2a66}
+.timeline-desc{margin:0;color:#333;font-size:0.95rem}
+
+@media (min-width:760px){
+    /* Use a two-column layout with a centered vertical line */
+    .timeline{
+        position:relative;
+        padding:28px 0;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:0 20px;
+        align-items:start;
+    }
+    .timeline::before{
+        content:"";
+        position:absolute;
+        left:50%;
+        top:0;
+        bottom:0;
+        width:3px;
+        background:#e6e6e6;
+        border-radius:2px;
+        transform:translateX(-50%);
+    }
+    .timeline-item{
+        width:46%;
+        margin:18px 0;
+        margin-left:0;
+        padding:16px;
+        box-sizing:border-box;
+        position:relative;
+        clear:both;
+    }
+    /* left column */
+    .timeline-item:nth-child(odd){
+        justify-self:end;
+        text-align:right;
+    }
+    /* right column */
+    .timeline-item:nth-child(even){
+        justify-self:start;
+        text-align:left;
+    }
+    .timeline-item::before{
+        content:"";
+        position:absolute;
+        top:26px;
+        width:14px;
+        height:14px;
+        background:#0066cc;
+        border-radius:50%;
+        border:3px solid #fff;
+        box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    }
+    .timeline-item:nth-child(odd)::before{ right:-9px; left:auto; }
+    .timeline-item:nth-child(even)::before{ left:-9px; right:auto; }
+
+    /* ensure the layout doesn't collapse when floats were previously used */
+    .timeline:after{ content:""; display:table; clear:both }
+}
+
+/* Dark mode adjustments for timeline */
+body.dark .timeline::before{background:#1f1f22}
+body.dark .timeline-item{background:linear-gradient(180deg,#0f1113 0%, #0b0d0f 100%);border-color:#1f1f22}
+body.dark .timeline-item::before{background:#1f6fff}
+body.dark .timeline-title{color:#cfe6ff}
+body.dark .timeline-desc{color:#cfcfcf}
