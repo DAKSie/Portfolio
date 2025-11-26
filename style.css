@@ -243,3 +243,32 @@ footer {
 @media (max-width:480px){
     .cert-card img{height:100px}
 }
+
+/* Projects grid (matches certificates design without images) */
+.project-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+    padding:0;
+    margin:0.6rem 0 0 0;
+    list-style:none;
+}
+.project-card{
+    background:linear-gradient(180deg,#ffffff 0%, #fbfbfb 100%);
+    border:1px solid #e7e7e7;
+    border-radius:10px;
+    padding:12px;
+    box-shadow:0 6px 18px rgba(20,24,28,0.04);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:flex-start;
+}
+.project-title{font-weight:600;color:#0b2a66;font-size:0.98rem}
+.project-desc{font-size:0.92rem;color:#333}
+.project-actions{margin-top:6px;width:100%;display:flex;justify-content:flex-end}
+.project-actions .btn{padding:0.4rem 0.7rem;font-size:0.92rem}
+
+@media (max-width:480px){
+    .project-grid{grid-template-columns:1fr}
+}
