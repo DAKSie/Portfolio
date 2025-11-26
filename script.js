@@ -192,7 +192,7 @@ if(isConfigFilled){
             if(!text) return { blocked: false, severity: 'low', categories: [], masked: text, is_feedback: false, reason: 'empty' };
 
             // Fast heuristic pass (run locally for low latency)
-            const profanity = ['fuck','shit','bitch','asshole','bastard','cunt','motherfucker','nigger','faggot'];
+            const profanity = ['fuck','shit','bitch','asshole','bastard','cunt','motherfucker','nigger','faggot', 'retard', 'sex', 'gay', 'lesbian', 'twink', 'chink'];
             let masked = text;
             let found = [];
             profanity.forEach(w => {
