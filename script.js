@@ -131,7 +131,8 @@ if(isConfigFilled){
         'global/certifications/thumbnail/Think Again IV - How to Avoid Fallacies Certificate.png',
         'global/certifications/thumbnail/Java Information Technology Specialist Certificate.png',
         'global/certifications/thumbnail/Introduction to Programming With CSharp.png',
-        'global/certifications/thumbnail/C++ Lab - Crafting Code in the Digital Age.png'
+        'global/certifications/thumbnail/C++ Lab - Crafting Code in the Digital Age.png',
+        'global/certifications/thumbnail/Codechum National Programming Competition.png'
     ];
 
     function buildCertCarousel(items){
